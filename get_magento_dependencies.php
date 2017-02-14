@@ -1,8 +1,16 @@
 <?php
 
-$directory = '/var/www/magento2/app/code/Magento';
+$options = getopt('d:', ['directory:']);
 
-$modules = scandir('/var/www/magento2/app/code/Magento');
+if (!empty($options['d'])) {
+    $directory = $options['d'];
+} elseif (!empty($options['directory'])) {
+    $directory = $options['directory'];
+} else {
+    throw new Exception('Directory parameter is not specified!');
+}
+
+$modules = scandir($directory);
 
 unset($modules[0], $modules[1]);
 
@@ -13,13 +21,15 @@ HEREDOC;
 
 $header = '||Occurrences count||Class||Comments||';
 
-$resultFile = '/var/www/magento2/results/result.txt';
-
-unlink($resultFile);
-
 foreach ($modules as $module) {
 
-    chdir($directory . '/' . $module);
+    $fullPathDir = $directory . '/' . $module;
+
+    if (!is_dir($fullPathDir)) {
+        continue;
+    }
+
+    chdir($fullPathDir);
 
     $cmd = $generalCmd . $module . "\\\'";
 
@@ -27,5 +37,6 @@ foreach ($modules as $module) {
     $result .= $header . "\n";
     $result .= shell_exec($cmd) . "\n\n";
 
-    file_put_contents($resultFile, $result, FILE_APPEND);
+    echo $result;
 }
+
